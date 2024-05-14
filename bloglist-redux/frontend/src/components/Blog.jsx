@@ -1,13 +1,40 @@
 import { useState } from "react"
-const Blog = ({ blog, deleteBlog, user, addLikes }) => {
-  const [visible, setVisible] = useState(false)
+import {useDispatch, useSelector } from "react-redux"
+import { addLikes, deletesBlog } from "../reducers/blogReducer" 
+import { setNotification } from "../reducers/notificationReducer"
 
-  const hideWhenVisible = { display: visible ? 'none' : '' }
-  const showWhenVisible = { display: visible ? '' : 'none' }
+const Blog = () => {
+  const blogs = useSelector(state => {
+    const sortedBlogs = [...state.blogs].sort((a,b)=> b.likes - a.likes)
+    return sortedBlogs
+})
+  const [visibleBlogIds, setVisibleBlogIds] = useState([]);
 
-  const toggleVisibility = () => {
-    setVisible(!visible)
+  const toggleVisibility = (id) => {
+    setVisibleBlogIds(prevState =>
+      prevState.includes(id)
+        ? prevState.filter(blogId => blogId !== id)
+        : [...prevState, id]
+    );
+  };
+
+  const dispatch = useDispatch()
+
+  const like = (id) => {
+    dispatch(addLikes(id))
+    console.log(id)
   }
+
+  const removeBlog = (id, title) => {
+    if(window.confirm(`Are you sure you want to delete ${title}`)){
+      dispatch(deletesBlog(id))
+      dispatch(setNotification(`You deleted${title}`, 4))
+      console.log(` ${title} deleted`)
+
+    }
+
+  }
+ 
   const blogStyle = {
     paddingTop: 10,
     paddingLeft: 2,
@@ -16,50 +43,25 @@ const Blog = ({ blog, deleteBlog, user, addLikes }) => {
     marginBottom: 5
   }
 
-  const showDelete = blog.user.name === user.name ? true : false
-  const handleDelete = () => {
-    if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
-      deleteBlog(blog.id)
-    }
-  }
-
-  const handleLikes = () => {
-    const blogObject = {
-      title: blog.title,
-      author: blog.author,
-      url: blog.url,
-      likes: blog.likes + 1
-    }
-
-    addLikes(blog.id, blogObject)
-  }
-  /*  console.log("Blog User ID:", blog.user.name);
-   console.log("Current User ID:", user.name);
-   console.log("Show Delete:", showDelete); */
-
-
-
   return (
-    <div style={blogStyle}>
-      <div style={hideWhenVisible} className='wehenHidden'>
-        {blog.title}  {blog.author}
-        <button onClick={toggleVisibility}>view</button>
-      </div>
-      <div style={showWhenVisible} className='whenShown'>
-        <p>{blog.title}{blog.author}
-          <button onClick={toggleVisibility}>hide</button></p>
-        <p>{blog.url}</p>
-        <p>{blog.likes} <button onClick={handleLikes}>likes</button></p>
-        <p>{blog.user.name}</p>
-        {showDelete && <button onClick={handleDelete}>remove</button>}
-      </div>
+    <div>
+      {blogs.map(blog =>
+        <div key={blog.id} style={blogStyle}>
+          <div>
+            {blog.title} {blog.author}
+            <button onClick={() => toggleVisibility(blog.id)}>
+              {visibleBlogIds.includes(blog.id) ? 'hide' : 'view'}
+            </button>
+          </div>
+          <div style={{ display: visibleBlogIds.includes(blog.id) ? "" : "none" }} className="whenShown">
+            <p>{blog.url}</p>
+            <p>{blog.likes} <button onClick={()=> like(blog.id)}>Likes</button></p>
+            <p>{blog.user.name}</p>
+            { <button onClick={()=>removeBlog(blog.id, blog.title)}>remove</button> }
+          </div>
+        </div>
+      )}
     </div>
   )
-
-
 }
-
-
-
-
 export default Blog

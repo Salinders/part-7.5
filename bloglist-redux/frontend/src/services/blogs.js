@@ -28,12 +28,13 @@ const remove = async (id) => {
   return response.data
 }
 
-const update = async (id, blogObject) => {
-  const response = await axios.put(`${baseUrl}/${id}`, blogObject)
-  return response.data
-
+const updateLikes = async (id) => {
+  const response = await axios.get(`${baseUrl}/${id}`)
+  const objectToModify = response.data
+  const updatedObject = { ...objectToModify, likes: objectToModify.likes + 1 }
+  const request = axios.put(`${baseUrl}/${id}`, updatedObject)
+  return request.then(response => response.data)
 }
 
 
-
-export default { getAll, create, setToken, remove, update }
+export default { getAll, create, setToken, remove, updateLikes }
